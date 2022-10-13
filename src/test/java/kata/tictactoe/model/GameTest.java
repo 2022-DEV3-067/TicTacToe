@@ -3,6 +3,8 @@ package kata.tictactoe.model;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class GameTest {
@@ -19,7 +21,7 @@ class GameTest {
         char[][] state = {{'x', 'x', 0}, {0, 0, 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state);
 
-        assertFalse(game.canMakeMove(0,1));
+        assertFalse(game.canMakeMove(0, 1));
     }
 
     @Test
@@ -27,7 +29,7 @@ class GameTest {
         char[][] state = {{'x', 'x', 0}, {0, 0, 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state);
 
-        assertFalse(game.canMakeMove(3,1));
+        assertFalse(game.canMakeMove(3, 1));
     }
 
     @Test
@@ -35,7 +37,7 @@ class GameTest {
         char[][] state = {{'x', 'x', 0}, {0, 0, 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state);
 
-        assertTrue(game.canMakeMove(0,2));
+        assertTrue(game.canMakeMove(0, 2));
     }
 
     @Test
@@ -43,10 +45,9 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 0}, {0, 0, 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        game.makeXMove(0,2);
+        game.makeXMove(0, 2);
 
-        char[][] state = (char[][]) ReflectionTestUtils.getField(game, "state");
-        assertEquals('x', state[0][2]);
+        assertEquals('x', game.getState()[0][2]);
     }
 
     @Test
@@ -54,10 +55,9 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 0}, {0, 0, 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        game.makeOMove(0,2);
+        game.makeOMove(0, 2);
 
-        char[][] state = (char[][]) ReflectionTestUtils.getField(game, "state");
-        assertEquals('o', state[0][2]);
+        assertEquals('o', game.getState()[0][2]);
     }
 
     @Test
@@ -65,7 +65,7 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 0}, {0, 0, 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeOMove(0,2);
+        Result result = game.makeOMove(0, 2);
 
         assertEquals(Result.INPROGRESS, result);
     }
@@ -75,7 +75,7 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 'o'}, {0, 0, 'o'}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeOMove(2,2);
+        Result result = game.makeOMove(2, 2);
 
         assertEquals(Result.OWINS, result);
     }
@@ -85,7 +85,7 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 0}, {'o', 'o', 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeOMove(1,2);
+        Result result = game.makeOMove(1, 2);
 
         assertEquals(Result.OWINS, result);
     }
@@ -95,7 +95,7 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 'o'}, {0, 'o', 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeOMove(2,0);
+        Result result = game.makeOMove(2, 0);
 
         assertEquals(Result.OWINS, result);
     }
@@ -105,7 +105,7 @@ class GameTest {
         char[][] state0 = {{'o', 'x', 'o'}, {'x', 'o', 'x'}, {'x', 0, 'x'}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeOMove(2,1);
+        Result result = game.makeOMove(2, 1);
 
         assertEquals(Result.DRAW, result);
     }
@@ -115,7 +115,7 @@ class GameTest {
         char[][] state0 = {{'x', 'o', 0}, {0, 0, 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeXMove(0,2);
+        Result result = game.makeXMove(0, 2);
 
         assertEquals(Result.INPROGRESS, result);
     }
@@ -125,7 +125,7 @@ class GameTest {
         char[][] state0 = {{'o', 'x', 0}, {0, 'x', 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeXMove(2,1);
+        Result result = game.makeXMove(2, 1);
 
         assertEquals(Result.XWINS, result);
     }
@@ -135,7 +135,7 @@ class GameTest {
         char[][] state0 = {{'o', 'x', 0}, {0, 'x', 'x'}, {0, 'o', 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeXMove(1,0);
+        Result result = game.makeXMove(1, 0);
 
         assertEquals(Result.XWINS, result);
     }
@@ -145,7 +145,7 @@ class GameTest {
         char[][] state0 = {{0, 'o', 'x'}, {0, 'x', 'o'}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeXMove(2,0);
+        Result result = game.makeXMove(2, 0);
 
         assertEquals(Result.XWINS, result);
     }
@@ -155,9 +155,22 @@ class GameTest {
         char[][] state0 = {{'x', 'o', 'x'}, {'x', 'x', 'o'}, {'o', 0, 'o'}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeXMove(2,1);
+        Result result = game.makeXMove(2, 1);
 
         assertEquals(Result.DRAW, result);
+    }
+
+    @Test
+    void getState_getCopyOfGameState() {
+        char[][] state0 = {{'x', 'o', 'x'}, {'x', 'x', 'o'}, {'o', 0, 'o'}};
+        ReflectionTestUtils.setField(game, "state", state0);
+
+        char[][] state = game.getState();
+
+        for (int i = 0; i < 3; i++) {
+            assertTrue(Arrays.equals(state0[i], state[i]));
+        }
+        assertTrue(state != state0);
     }
 
 }

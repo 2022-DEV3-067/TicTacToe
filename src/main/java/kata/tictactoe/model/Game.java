@@ -1,5 +1,6 @@
 package kata.tictactoe.model;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 public class Game {
@@ -23,6 +24,14 @@ public class Game {
         return l >= 0 && l < 3
                 && c >= 0 && c < 3
                 && state[l][c] == 0;
+    }
+
+    public char[][] getState() {
+        char[][] stateCopy = new char[3][3];
+        for (int i = 0; i < 3; i++) {
+            stateCopy[i] = Arrays.copyOf(state[i], 3);
+        }
+        return stateCopy;
     }
 
     private Result makeMove(char value, int l, int c) {

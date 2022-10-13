@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tic tac toe kata</title>
+    <link th:href="@{/styles/game.css}" rel="stylesheet" />
+</head>
+<body>
+<div class="game">
+    <div class="grid">
+        <div class="box left bottom"><div th:class="${grid[0][0]}"></div></div>
+        <div class="box left bottom"><div th:class="${grid[0][1]}"></div></div>
+        <div class="box bottom"><div th:class="${grid[0][2]}"></div></div>
+
+        <div class="box left bottom"><div th:class="${grid[1][0]}"></div></div>
+        <div class="box left bottom"><div th:class="${grid[1][1]}"></div></div>
+        <div class="box bottom"><div th:class="${grid[1][2]}"></div></div>
+
+        <div class="box left"><div th:class="${grid[2][0]}"></div></div>
+        <div class="box left"><div th:class="${grid[2][1]}"></div></div>
+        <div class="box"><div th:class="${grid[2][2]}"></div></div>
+
+    </div>
+    <div class="score">
+        <span class="p1">
+            <span>Player ( </span>
+            <span th:class="${playerSign}" th:text="${playerSign}"></span>
+            <span> )</span></span>
+        <span class="separator">-</span>
+        <span class="p2">
+            <span>Computer ( </span>
+            <span th:class="${opponentSign}" th:text="${opponentSign}"></span>
+            <span> )</span></span>
+    </div>
+</div>
+</body>
+</html>
