@@ -12,14 +12,6 @@ public class Game {
         return id;
     }
 
-    public Result makeXMove(int l, int c) {
-        return makeMove('x', l, c);
-    }
-
-    public Result makeOMove(int l, int c) {
-        return makeMove('o', l, c);
-    }
-
     public boolean canMakeMove(int l, int c) {
         return l >= 0 && l < 3
                 && c >= 0 && c < 3
@@ -34,7 +26,7 @@ public class Game {
         return stateCopy;
     }
 
-    private Result makeMove(char value, int l, int c) {
+    public Result makeMove(char value, int l, int c) {
         if (!canMakeMove(l, c)) {
             throw new IllegalStateException();
         }

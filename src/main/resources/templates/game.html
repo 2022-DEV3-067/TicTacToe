@@ -7,20 +7,23 @@
 </head>
 <body>
 <div class="game">
-    <div class="grid">
-        <div class="box left bottom"><div th:class="${grid[0][0]}"></div></div>
-        <div class="box left bottom"><div th:class="${grid[0][1]}"></div></div>
-        <div class="box bottom"><div th:class="${grid[0][2]}"></div></div>
+    <form id="gridForm" th:action="@{/game/__${game.id}__}" method="post">
+        <div class="grid">
+            <div id="00" onclick="userClick(event)" class="box left bottom"><div th:class="${game.state[0][0]}"></div></div>
+            <div id="01" onclick="userClick(event)" class="box left bottom"><div th:class="${game.state[0][1]}"></div></div>
+            <div id="02" onclick="userClick(event)" class="box bottom"><div th:class="${game.state[0][2]}"></div></div>
 
-        <div class="box left bottom"><div th:class="${grid[1][0]}"></div></div>
-        <div class="box left bottom"><div th:class="${grid[1][1]}"></div></div>
-        <div class="box bottom"><div th:class="${grid[1][2]}"></div></div>
+            <div id="10" onclick="userClick(event)" class="box left bottom"><div th:class="${game.state[1][0]}"></div></div>
+            <div id="11" onclick="userClick(event)" class="box left bottom"><div th:class="${game.state[1][1]}"></div></div>
+            <div id="12" onclick="userClick(event)" class="box bottom"><div th:class="${game.state[1][2]}"></div></div>
 
-        <div class="box left"><div th:class="${grid[2][0]}"></div></div>
-        <div class="box left"><div th:class="${grid[2][1]}"></div></div>
-        <div class="box"><div th:class="${grid[2][2]}"></div></div>
+            <div id="20" onclick="userClick(event)" class="box left"><div th:class="${game.state[2][0]}"></div></div>
+            <div id="21" onclick="userClick(event)" class="box left"><div th:class="${game.state[2][1]}"></div></div>
+            <div id="22" onclick="userClick(event)" class="box"><div th:class="${game.state[2][2]}"></div></div>
 
-    </div>
+        </div>
+        <input id="coordinate" name="coordinate" type="hidden">
+    </form>
     <div class="score">
         <span class="p1">
             <span>Player ( </span>
@@ -33,5 +36,25 @@
             <span> )</span></span>
     </div>
 </div>
+
+<script th:inline="javascript">
+/*<![CDATA[*/
+    var userClick = function(event) {
+        var id = event.target.getAttribute("id");
+        var notEmpty = event.target.classList.contains("x")
+                        ||  event.target.classList.contains("o")
+                        ||  (event.target.firstElementChild != null &&
+                            (event.target.firstElementChild.classList.contains("x")
+                            ||  event.target.firstElementChild.classList.contains("o")));
+        if(!id) {
+            id = event.target.parentElement.getAttribute("id");
+        }
+        if(!notEmpty) {
+            document.getElementById("coordinate").setAttribute("value", id);
+            document.getElementById("gridForm").submit();
+        }
+    }
+/*]]>*/
+</script>
 </body>
 </html>
