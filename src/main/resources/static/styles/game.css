@@ -79,3 +79,13 @@
     pointer-events: none;
     cursor: auto;
 }
+.box.greyed {
+    background-color: #efeeee;
+}
+.box.greyed .o {
+    border-color: #d0d0d0;
+}
+.box.greyed .x:after,
+.box.greyed .x:before {
+    background-color: #d0d0d0;
+}

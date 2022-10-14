@@ -26,7 +26,7 @@ public class Game {
         return stateCopy;
     }
 
-    public Result makeMove(char value, int l, int c) {
+    public GameResult makeMove(char value, int l, int c) {
         if (!canMakeMove(l, c)) {
             throw new IllegalStateException();
         }
@@ -34,7 +34,7 @@ public class Game {
         return getResult();
     }
 
-    private Result getResult() {
+    private GameResult getResult() {
         Result result = Result.DRAW;
         int d1 = 0;
         int d2 = 0;
@@ -48,21 +48,24 @@ public class Game {
                     result = Result.INPROGRESS;
                 }
             }
-            if (h == 360 || v == 360) {
-                return Result.XWINS;
-            }
-            if (h == 333 || v == 333) {
-                return Result.OWINS;
+            if (h == 360) {
+                return new GameResult(Result.XWINS, l * 10, l * 10 + 2);
+            } else if (v == 360) {
+                return new GameResult(Result.XWINS, l, 20 + l);
+            } else if (h == 333) {
+                return new GameResult(Result.OWINS, l * 10, l * 10 + 2);
+            } else if (v == 333) {
+                return new GameResult(Result.OWINS, l, 20 + l);
             }
             d1 += state[l][l];
             d2 += state[l][2 - l];
         }
-        if (d1 == 360 || d2 == 360) {
-            return Result.XWINS;
+        if (d1 == 333 || d1 == 360) {
+            return new GameResult(d1 == 333 ? Result.OWINS : Result.XWINS, 0, 22);
         }
-        if (d1 == 333 || d2 == 333) {
-            return Result.OWINS;
+        if (d2 == 333 || d2 == 360) {
+            return new GameResult(d2 == 333 ? Result.OWINS : Result.XWINS, 2, 20);
         }
-        return result;
+        return new GameResult(result);
     }
 }

@@ -5,7 +5,7 @@
     <title>Tic tac toe kata</title>
     <link th:href="@{/styles/game.css}" rel="stylesheet" />
 </head>
-<body>
+<body onload="highlightCompletedRow()">
 <div class="game">
     <form id="gridForm" th:action="@{/game/__${game.id}__}" method="post">
         <div class="grid">
@@ -35,11 +35,17 @@
             <span th:class="${opponentSign}" th:text="${opponentSign}"></span>
             <span> )</span></span>
     </div>
+    <div class="score">
+        <span th:if="${winner}">You Win :)</span>
+        <span th:if="${winner != null && !winner}">You lost :(</span>
+        <span th:if="${draw}">Draw :|</span>
+    </div>
 </div>
 
 <script th:inline="javascript">
 /*<![CDATA[*/
     var userClick = function(event) {
+        var gameOver = /*[[${gameOver}]]*/;
         var id = event.target.getAttribute("id");
         var notEmpty = event.target.classList.contains("x")
                         ||  event.target.classList.contains("o")
@@ -49,9 +55,39 @@
         if(!id) {
             id = event.target.parentElement.getAttribute("id");
         }
-        if(!notEmpty) {
+        if(!notEmpty && !gameOver) {
             document.getElementById("coordinate").setAttribute("value", id);
             document.getElementById("gridForm").submit();
+        }
+    }
+    var highlightCompletedRow = function(event) {
+        var winner = /*[[${winner}]]*/;
+        var startPos = /*[[${startPos}]]*/;
+        var endPos = /*[[${endPos}]]*/;
+        if(startPos == null || endPos == null){
+            return;
+        }
+        let skip ;
+        if (Math.floor(startPos / 10) == Math.floor(endPos / 10)) {
+            //same row
+            let r = Math.floor(endPos / 10);
+            skip = [ r + '0' , r + '1', r + '2'];
+        }else if ((startPos % 10) == (endPos % 10)) {
+            // same column
+            let c = startPos % 10;
+            skip = [ '0' + c , '1' + c ,  '2' + c];
+        }else {
+            skip = [ '0' + startPos , endPos + '', '11'];
+        }
+        console.log(skip);
+        if(winner !== null) {
+            let boxes = document.getElementsByClassName('box');
+            for(let i = 0; i< 9; i++) {
+                if(skip.includes(boxes[i].getAttribute("id"))){
+                    continue;
+                };
+                boxes[i].classList.add("greyed");
+            }
         }
     }
 /*]]>*/

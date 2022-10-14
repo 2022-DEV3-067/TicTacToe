@@ -1,6 +1,8 @@
 package kata.tictactoe.controllers;
 
 import kata.tictactoe.model.Game;
+import kata.tictactoe.model.GameResult;
+import kata.tictactoe.model.Result;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,12 +20,14 @@ public class GameController {
     private char sign = 0;
     private Game currentGame;
     private Random random = new Random();
+    private GameResult result;
 
     @GetMapping({"", "/"})
     public String goToNewGame() {
         sign = gamesCount % 2 == 0 ? 'x' : 'o';
         gamesCount++;
         currentGame = new Game();
+        result = null;
         if (sign == 'o') {
             currentGame.makeMove('x', random.nextInt(2), random.nextInt(2));
         }
@@ -36,11 +40,23 @@ public class GameController {
     }
 
     @PostMapping("/game/{id}")
-    public String makeMove(@ModelAttribute("coordinate") String coordinates) {
-        currentGame.makeMove(sign,
+    public String makeMove(@ModelAttribute("coordinate") String coordinates, Model model) {
+        result = currentGame.makeMove(sign,
                 Integer.valueOf(coordinates.substring(0, 1)),
                 Integer.valueOf(coordinates.substring(1, 2)));
-        computerMove();
+        if(result.getResult() == Result.INPROGRESS){
+            result = computerMove();
+        }
+        if(result.getResult() == Result.OWINS){
+            model.addAttribute("winner", sign == 'o');
+        }else if(result.getResult() == Result.XWINS){
+            model.addAttribute("winner", sign == 'x');
+        }else if(result.getResult() == Result.DRAW){
+            model.addAttribute("draw", true);
+        }
+        model.addAttribute("startPos", result.getStartPos());
+        model.addAttribute("endPos", result.getEndPos());
+        model.addAttribute("gameOver", result.getResult() != Result.INPROGRESS);
         return "game";
     }
 
@@ -59,16 +75,16 @@ public class GameController {
         return currentGame;
     }
 
-    private void computerMove() {
+    private GameResult computerMove() {
         char[][] state = currentGame.getState();
         char o = sign == 'o' ? 'x' : 'o';
         for (int l = 0; l < 3; l++) {
             for (int c = 0; c < 3; c++) {
                 if (state[l][c] == 0) {
-                    currentGame.makeMove(o, l, c);
-                    return;
+                    return currentGame.makeMove(o, l, c);
                 }
             }
         }
+        return null;
     }
 }

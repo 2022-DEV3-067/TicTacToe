@@ -65,9 +65,11 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 0}, {0, 0, 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('o', 0, 2);
+        GameResult result = game.makeMove('o', 0, 2);
 
-        assertEquals(Result.INPROGRESS, result);
+        assertEquals(Result.INPROGRESS, result.getResult());
+        assertNull(result.getStartPos());
+        assertNull(result.getEndPos());
     }
 
     @Test
@@ -75,9 +77,11 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 'o'}, {0, 0, 'o'}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('o', 2, 2);
+        GameResult result = game.makeMove('o', 2, 2);
 
-        assertEquals(Result.OWINS, result);
+        assertEquals(Result.OWINS, result.getResult());
+        assertEquals(2, result.getStartPos());
+        assertEquals(22, result.getEndPos());
     }
 
     @Test
@@ -85,9 +89,11 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 0}, {'o', 'o', 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('o', 1, 2);
+        GameResult result = game.makeMove('o', 1, 2);
 
-        assertEquals(Result.OWINS, result);
+        assertEquals(Result.OWINS, result.getResult());
+        assertEquals(10, result.getStartPos());
+        assertEquals(12, result.getEndPos());
     }
 
     @Test
@@ -95,9 +101,11 @@ class GameTest {
         char[][] state0 = {{'x', 'x', 'o'}, {0, 'o', 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('o', 2, 0);
+        GameResult result = game.makeMove('o', 2, 0);
 
-        assertEquals(Result.OWINS, result);
+        assertEquals(Result.OWINS, result.getResult());
+        assertEquals(2, result.getStartPos());
+        assertEquals(20, result.getEndPos());
     }
 
     @Test
@@ -105,9 +113,11 @@ class GameTest {
         char[][] state0 = {{'o', 'x', 'o'}, {'x', 'o', 'x'}, {'x', 0, 'x'}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('o', 2, 1);
+        GameResult result = game.makeMove('o', 2, 1);
 
-        assertEquals(Result.DRAW, result);
+        assertEquals(Result.DRAW, result.getResult());
+        assertNull(result.getStartPos());
+        assertNull(result.getEndPos());
     }
 
     @Test
@@ -115,9 +125,11 @@ class GameTest {
         char[][] state0 = {{'x', 'o', 0}, {0, 0, 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('x', 0, 2);
+        GameResult result = game.makeMove('x', 0, 2);
 
-        assertEquals(Result.INPROGRESS, result);
+        assertEquals(Result.INPROGRESS, result.getResult());
+        assertNull(result.getStartPos());
+        assertNull(result.getEndPos());
     }
 
     @Test
@@ -125,9 +137,11 @@ class GameTest {
         char[][] state0 = {{'o', 'x', 0}, {0, 'x', 0}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('x', 2, 1);
+        GameResult result = game.makeMove('x', 2, 1);
 
-        assertEquals(Result.XWINS, result);
+        assertEquals(Result.XWINS, result.getResult());
+        assertEquals(1, result.getStartPos());
+        assertEquals(21, result.getEndPos());
     }
 
     @Test
@@ -135,9 +149,11 @@ class GameTest {
         char[][] state0 = {{'o', 'x', 0}, {0, 'x', 'x'}, {0, 'o', 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('x', 1, 0);
+        GameResult result = game.makeMove('x', 1, 0);
 
-        assertEquals(Result.XWINS, result);
+        assertEquals(Result.XWINS, result.getResult());
+        assertEquals(10, result.getStartPos());
+        assertEquals(12, result.getEndPos());
     }
 
     @Test
@@ -145,9 +161,11 @@ class GameTest {
         char[][] state0 = {{0, 'o', 'x'}, {0, 'x', 'o'}, {0, 0, 0}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('x', 2, 0);
+        GameResult result = game.makeMove('x', 2, 0);
 
-        assertEquals(Result.XWINS, result);
+        assertEquals(Result.XWINS, result.getResult());
+        assertEquals(2, result.getStartPos());
+        assertEquals(20, result.getEndPos());
     }
 
     @Test
@@ -155,9 +173,11 @@ class GameTest {
         char[][] state0 = {{'x', 'o', 'x'}, {'x', 'x', 'o'}, {'o', 0, 'o'}};
         ReflectionTestUtils.setField(game, "state", state0);
 
-        Result result = game.makeMove('x', 2, 1);
+        GameResult result = game.makeMove('x', 2, 1);
 
-        assertEquals(Result.DRAW, result);
+        assertEquals(Result.DRAW, result.getResult());
+        assertNull(result.getStartPos());
+        assertNull(result.getEndPos());
     }
 
     @Test
