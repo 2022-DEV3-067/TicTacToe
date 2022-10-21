@@ -1,21 +1,19 @@
 package kata.tictactoe.controllers;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import kata.tictactoe.model.Game;
-import kata.tictactoe.model.GameResult;
 import kata.tictactoe.model.Result;
+import kata.tictactoe.services.GameService;
 import org.hamcrest.core.StringStartsWith;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,6 +23,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class GameControllerTest {
 
+    @Mock
+    private GameService gameService;
     private MockMvc mockMvc;
     @InjectMocks
     private GameController gameController;
@@ -35,83 +35,52 @@ class GameControllerTest {
     }
 
     @Test
-    public void getNewGame() throws Exception {
-        mockMvc.perform(get("/"))
-                .andExpect(view().name(StringStartsWith.startsWith("redirect:/game")));
-    }
-
-
-    @Ignore
-    // [TODO] use power mock to spy on new instance of Game
-    public void getNewGame_OddGame_GridContainsXMove() throws Exception {
-        Game mock = mock(Game.class);
-        ReflectionTestUtils.setField(gameController, "currentGame", mock);
-        ReflectionTestUtils.setField(gameController, "gamesCount", 1);
-        when(mock.getState()).thenReturn(new char[][]{});
+    void getNewGame() throws Exception {
+        when(gameService.startNewGame(anyString())).thenReturn(mock(Game.class));
 
         mockMvc.perform(get("/"))
                 .andExpect(view().name(StringStartsWith.startsWith("redirect:/game")));
-
-        verify(mock, times(1)).makeMove('x', 0, 0);
     }
 
     @Test
-    public void goToNewGame_EvenGame_GridEmpty() throws Exception {
-        Game mock = mock(Game.class);
-        ReflectionTestUtils.setField(gameController, "currentGame", mock);
+    void goToNewGame_EvenGame_GridEmpty() throws Exception {
+        MockHttpSession session = new MockHttpSession(null, "456");
+        when(gameService.getCurrentGameById(anyString())).thenReturn(mock(Game.class));
 
-        mockMvc.perform(get("/game/123"))
-                .andExpect(view().name("game"));
-
-        verify(mock, never()).makeMove('x', 0, 0);
+        mockMvc.perform(get("/game/123").session(session).param("id", "123"))
+                .andExpect(view().name("game"))
+                .andExpect(model().attributeExists("game", "playerSign", "opponentSign"));
     }
 
     @Test
-    public void makeMove_CoordinateIs21_DelegatesToGameObjectWithCorrectValues() throws Exception {
-        Game mock = mock(Game.class);
-        ReflectionTestUtils.setField(gameController, "currentGame", mock);
-        ReflectionTestUtils.setField(gameController, "sign", 'o');
-        when(mock.makeMove(anyChar(), eq(1), eq(2))).thenReturn(mock(GameResult.class));
+    void makeMove_CoordinateIs21_DelegatesToGameObjectWithCorrectValues() throws Exception {
+        when(gameService.makeMove(anyString(), anyString(), anyString())).thenReturn(mock(Game.class));
+        MockHttpSession session = new MockHttpSession(null, "456");
+        when(gameService.getCurrentGameById(anyString())).thenReturn(mock(Game.class));
 
-        mockMvc.perform(post("/game/123").param("coordinate", "12"))
-                .andExpect(view().name("game"));
+        mockMvc.perform(post("/game/123")
+                .param("coordinate", "12")
+                .param("id", "213")
+                .session(session))
+                .andExpect(view().name("game"))
+                .andExpect(model().attributeExists("game", "playerSign", "opponentSign"));
 
-        verify(mock, times(1)).makeMove('o', 1, 2);
+        verify(gameService, times(1)).makeMove("12", "123", "456");
     }
 
     @Test
-    public void makeMove_PlayComputerMove() throws Exception {
+    void makeMove_IsLastMove_showResults() throws Exception {
+        MockHttpSession session = new MockHttpSession(null, "456");
         Game mock = mock(Game.class);
-        when(mock.getState()).thenReturn(new char[][]{{'x', 'x', 'o'}, {0, 0, 0}, {0, 0, 0}});
-        ReflectionTestUtils.setField(gameController, "currentGame", mock);
-        ReflectionTestUtils.setField(gameController, "sign", 'o');
-        GameResult gameResult= mock(GameResult.class);
-        when(gameResult.getResult()).thenReturn(Result.INPROGRESS);
-        when(mock.makeMove(anyChar(), anyInt(), anyInt())).thenReturn(gameResult);
+        when(gameService.makeMove(anyString(), anyString(), anyString())).thenReturn(mock);
+        when(gameService.getCurrentGameById(anyString())).thenReturn(mock);
+        when(mock.getResult()).thenReturn(Result.OWINS);
+        when(mock.getStartPos()).thenReturn(0);
+        when(mock.getEndPos()).thenReturn(20);
+        when(mock.getoPlayer()).thenReturn("456");
 
-        mockMvc.perform(post("/game/123").param("coordinate", "12"))
-                .andExpect(view().name("game"));
-
-        verify(mock, times(1)).makeMove('o', 1, 2);
-        ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
-        verify(mock, times(1)).makeMove(eq('x'), captor.capture(), captor.capture());
-        int l = captor.getAllValues().get(0);
-        int c = captor.getAllValues().get(1);
-        assertTrue((l == 1 && c >= 0 && c < 3) || (l == 2 && (c == 0 || c == 2)));
-    }
-
-    @Test
-    public void makeMove_IsLastMove_showResults() throws Exception {
-        Game mock = mock(Game.class);
-        GameResult gameResult = mock(GameResult.class);
-        ReflectionTestUtils.setField(gameController, "currentGame", mock);
-        ReflectionTestUtils.setField(gameController, "sign", 'o');
-        when(mock.makeMove(anyChar(), eq(1), eq(2))).thenReturn(gameResult);
-        when(gameResult.getResult()).thenReturn(Result.OWINS);
-        when(gameResult.getStartPos()).thenReturn(0);
-        when(gameResult.getEndPos()).thenReturn(20);
-
-        mockMvc.perform(post("/game/123").param("coordinate", "12"))
+        mockMvc.perform(post("/game/123").session(session)
+                .param("coordinate", "12").param("id", "123"))
                 .andExpect(view().name("game"))
                 .andExpect(model().attribute("winner", true))
                 .andExpect(model().attribute("startPos", 0))

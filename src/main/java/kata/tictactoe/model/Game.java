@@ -7,6 +7,11 @@ public class Game {
     private final String id = UUID.randomUUID().toString();
     //Internal Convention for this class, O is represented by 1 value and X by 2 value
     private final char[][] state = new char[3][3];
+    private String xPlayer;
+    private String oPlayer;
+    private Result result = Result.INPROGRESS;
+    private Integer startPos;
+    private Integer endPos;
 
     public String getId() {
         return id;
@@ -26,46 +31,109 @@ public class Game {
         return stateCopy;
     }
 
-    public GameResult makeMove(char value, int l, int c) {
+    public void makeMove(char value, int l, int c) {
         if (!canMakeMove(l, c)) {
             throw new IllegalStateException();
         }
         state[l][c] = value;
-        return getResult();
+        updateState();
     }
 
-    private GameResult getResult() {
-        Result result = Result.DRAW;
-        int d1 = 0;
-        int d2 = 0;
-        for (int l = 0; l < 3; l++) {
+    public String getxPlayer() {
+        return xPlayer;
+    }
+
+    public void setxPlayer(String xPlayer) {
+        this.xPlayer = xPlayer;
+    }
+
+    public String getoPlayer() {
+        return oPlayer;
+    }
+
+    public void setoPlayer(String oPlayer) {
+        this.oPlayer = oPlayer;
+    }
+
+    public Result getResult() {
+        return result;
+    }
+
+    public Integer getStartPos() {
+        return startPos;
+    }
+
+    public Integer getEndPos() {
+        return endPos;
+    }
+
+    private void updateState() {
+        this.result = Result.DRAW;
+        int diag1 = 0; // rename
+        int diag2 = 0;
+        for (int row = 0; row < 3; row++) {
             int v = 0;
             int h = 0;
-            for (int c = 0; c < 3; c++) {
-                h += state[l][c];
-                v += state[c][l];
-                if (state[l][c] == 0) {
+            for (int col = 0; col < 3; col++) {
+                h += state[row][col];
+                v += state[col][row];
+                if (state[row][col] == 0) {
                     result = Result.INPROGRESS;
                 }
             }
-            if (h == 360) {
-                return new GameResult(Result.XWINS, l * 10, l * 10 + 2);
-            } else if (v == 360) {
-                return new GameResult(Result.XWINS, l, 20 + l);
-            } else if (h == 333) {
-                return new GameResult(Result.OWINS, l * 10, l * 10 + 2);
-            } else if (v == 333) {
-                return new GameResult(Result.OWINS, l, 20 + l);
+            if (hasCompletedHRow(h, row) || hasCompletedVRow(v, row)) {
+                return;
             }
-            d1 += state[l][l];
-            d2 += state[l][2 - l];
+            diag1 += state[row][row];
+            diag2 += state[row][2 - row];
         }
-        if (d1 == 333 || d1 == 360) {
-            return new GameResult(d1 == 333 ? Result.OWINS : Result.XWINS, 0, 22);
+        if (hasCompletedDiagonal1(diag1)) {
+            return;
         }
-        if (d2 == 333 || d2 == 360) {
-            return new GameResult(d2 == 333 ? Result.OWINS : Result.XWINS, 2, 20);
+        hasCompletedDiagonal2(diag2);
+    }
+
+    private void updateState(Result result, int startPos, int endPos) {
+        this.result = result;
+        this.startPos = startPos;
+        this.endPos = endPos;
+    }
+
+    private boolean hasCompletedHRow(int h, int row) {
+        if (h == 360) {
+            updateState(Result.XWINS, row * 10, row * 10 + 2);
+            return true;
+        } else if (h == 333) {
+            updateState(Result.OWINS, row * 10, row * 10 + 2);
+            return true;
         }
-        return new GameResult(result);
+        return false;
+    }
+
+    private boolean hasCompletedVRow(int v, int row) {
+        if (v == 360) {
+            updateState(Result.XWINS, row, 20 + row);
+            return true;
+        } else if (v == 333) {
+            updateState(Result.OWINS, row, 20 + row);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean hasCompletedDiagonal1(int diag1) {
+        if (diag1 == 333 || diag1 == 360) {
+            updateState(diag1 == 333 ? Result.OWINS : Result.XWINS, 0, 22);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean hasCompletedDiagonal2(int diag2) {
+        if (diag2 == 333 || diag2 == 360) {
+            updateState(diag2 == 333 ? Result.OWINS : Result.XWINS, 2, 20);
+            return true;
+        }
+        return false;
     }
 }
