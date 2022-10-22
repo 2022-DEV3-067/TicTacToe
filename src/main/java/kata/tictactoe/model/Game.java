@@ -12,6 +12,7 @@ public class Game {
     private Result result = Result.INPROGRESS;
     private Integer startPos;
     private Integer endPos;
+    private char lastMove;
 
     public String getId() {
         return id;
@@ -32,11 +33,17 @@ public class Game {
     }
 
     public void makeMove(char value, int l, int c) {
-        if (!canMakeMove(l, c)) {
+        if (!canMakeMove(l, c) || value == lastMove) {
             throw new IllegalStateException();
         }
         state[l][c] = value;
+        lastMove = value;
         updateState();
+    }
+
+    public boolean isYourTurn(String playerId) {
+        return playerId.equals(xPlayer) && (lastMove == 'o' || lastMove == '\u0000')
+                || playerId.equals(oPlayer) && lastMove == 'x';
     }
 
     public String getxPlayer() {
@@ -65,6 +72,15 @@ public class Game {
 
     public Integer getEndPos() {
         return endPos;
+    }
+
+    public String getOpponent(String playerId) {
+        if (playerId.equals(oPlayer)) {
+            return xPlayer;
+        } else if (playerId.equals(xPlayer)) {
+            return oPlayer;
+        }
+        throw new IllegalArgumentException();
     }
 
     private void updateState() {

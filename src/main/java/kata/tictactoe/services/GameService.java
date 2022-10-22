@@ -11,4 +11,6 @@ public interface GameService {
     Game getCurrentGameById(String gameId);
 
     Game makeMove(final String coordinates, final String gameId, final String playerId);
+
+    Game joinGame(final String gameId, final String playerId);
 }

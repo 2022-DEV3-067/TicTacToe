@@ -4,34 +4,35 @@
     <meta charset="UTF-8">
     <title>Tic tac toe kata</title>
     <link th:href="@{/styles/game.css}" rel="stylesheet" />
+    <script th:src="@{/webjars/jquery/3.6.1/jquery.min.js}"></script>
 </head>
 <body onload="highlightCompletedRow()">
-<div class="game">
-    <form id="gridForm" th:action="@{/game/__${game.id}__}" method="post">
-        <div class="grid">
-            <div id="00" onclick="userClick(event)" class="box left bottom"><div th:class="${game.state[0][0]}"></div></div>
-            <div id="01" onclick="userClick(event)" class="box left bottom"><div th:class="${game.state[0][1]}"></div></div>
-            <div id="02" onclick="userClick(event)" class="box bottom"><div th:class="${game.state[0][2]}"></div></div>
+<div class="game" th:fragment="game-grid" id="game-grid" >
+    <form id="gridForm">
+        <div class="grid" th:classappend="${blockGrid} ? 'block-grid' : ''">
+            <div id="00" onclick="makeMove(event)" class="box left bottom"><div th:class="${game.state[0][0]}"></div></div>
+            <div id="01" onclick="makeMove(event)" class="box left bottom"><div th:class="${game.state[0][1]}"></div></div>
+            <div id="02" onclick="makeMove(event)" class="box bottom"><div th:class="${game.state[0][2]}"></div></div>
 
-            <div id="10" onclick="userClick(event)" class="box left bottom"><div th:class="${game.state[1][0]}"></div></div>
-            <div id="11" onclick="userClick(event)" class="box left bottom"><div th:class="${game.state[1][1]}"></div></div>
-            <div id="12" onclick="userClick(event)" class="box bottom"><div th:class="${game.state[1][2]}"></div></div>
+            <div id="10" onclick="makeMove(event)" class="box left bottom"><div th:class="${game.state[1][0]}"></div></div>
+            <div id="11" onclick="makeMove(event)" class="box left bottom"><div th:class="${game.state[1][1]}"></div></div>
+            <div id="12" onclick="makeMove(event)" class="box bottom"><div th:class="${game.state[1][2]}"></div></div>
 
-            <div id="20" onclick="userClick(event)" class="box left"><div th:class="${game.state[2][0]}"></div></div>
-            <div id="21" onclick="userClick(event)" class="box left"><div th:class="${game.state[2][1]}"></div></div>
-            <div id="22" onclick="userClick(event)" class="box"><div th:class="${game.state[2][2]}"></div></div>
+            <div id="20" onclick="makeMove(event)" class="box left"><div th:class="${game.state[2][0]}"></div></div>
+            <div id="21" onclick="makeMove(event)" class="box left"><div th:class="${game.state[2][1]}"></div></div>
+            <div id="22" onclick="makeMove(event)" class="box"><div th:class="${game.state[2][2]}"></div></div>
 
         </div>
         <input id="coordinate" name="coordinate" type="hidden">
     </form>
     <div class="score">
         <span class="p1">
-            <span>Player ( </span>
+            <span>You ( </span>
             <span th:class="${playerSign}" th:text="${playerSign}"></span>
             <span> )</span></span>
         <span class="separator">-</span>
         <span class="p2">
-            <span>Computer ( </span>
+            <span>Player ( </span>
             <span th:class="${opponentSign}" th:text="${opponentSign}"></span>
             <span> )</span></span>
     </div>
@@ -39,13 +40,19 @@
         <span th:if="${winner}">You Win :)</span>
         <span th:if="${winner != null && !winner}">You lost :(</span>
         <span th:if="${draw}">Draw :|</span>
+        <input type="hidden" id="winner" th:value="${winner}" />
+        <input type="hidden" id="startPos" th:value="${startPos}" />
+        <input type="hidden" id="endPos" th:value="${endPos}" />
     </div>
 </div>
 
 <script th:inline="javascript">
 /*<![CDATA[*/
-    var userClick = function(event) {
-        var gameOver = /*[[${gameOver}]]*/;
+    var makeMove = function(event) {
+        if($('#game-grid').hasClass('block-grid')) {
+            return;
+        }
+        var gameId = /*[[${game.id}]]*/;
         var id = event.target.getAttribute("id");
         var notEmpty = event.target.classList.contains("x")
                         ||  event.target.classList.contains("o")
@@ -55,16 +62,23 @@
         if(!id) {
             id = event.target.parentElement.getAttribute("id");
         }
-        if(!notEmpty && !gameOver) {
+        if(!notEmpty) {
             document.getElementById("coordinate").setAttribute("value", id);
-            document.getElementById("gridForm").submit();
+            $.post("/game/" + gameId, $( "#gridForm" ).serialize())
+              .done(function(fragment) {
+                 $("#game-grid").replaceWith(fragment);
+                 highlightCompletedRow();
+              })
+              .fail(function() {
+                alert( "Error contacting Opponent" );
+              });
         }
     }
     var highlightCompletedRow = function(event) {
-        var winner = /*[[${winner}]]*/;
-        var startPos = /*[[${startPos}]]*/;
-        var endPos = /*[[${endPos}]]*/;
-        if(startPos == null || endPos == null){
+        var winner = $('#winner').val();
+        var startPos = new Number($('#startPos').val());
+        var endPos = new Number($('#endPos').val());
+        if(winner === ""){
             return;
         }
         let skip ;
@@ -79,7 +93,7 @@
         }else {
             skip = [ '0' + startPos , endPos + '', '11'];
         }
-        if(winner !== null) {
+        if(winner !== "") {
             let boxes = document.getElementsByClassName('box');
             for(let i = 0; i< 9; i++) {
                 if(skip.includes(boxes[i].getAttribute("id"))){
@@ -88,6 +102,25 @@
                 boxes[i].classList.add("greyed");
             }
         }
+    }
+    $(document).ready(function() {
+        var playerId = /*[[${playerId}]]*/;
+        if(playerId) {
+            const ws = new WebSocket('ws://localhost:8080/players?playerId=' + playerId);
+	        ws.onmessage = function(data) {
+	            refreshGameGrid();
+		        waitForOpponentMove =  false;
+	        }
+        }
+    });
+    var refreshGameGrid = function () {
+        var gameId = /*[[${game.id}]]*/;
+        $.post("/game/" + gameId + "/refresh")
+          .done(function(fragment) {
+             $("#game-grid").replaceWith(fragment);
+             highlightCompletedRow();
+             waitForOpponentMove = true;
+          });
     }
 /*]]>*/
 </script>

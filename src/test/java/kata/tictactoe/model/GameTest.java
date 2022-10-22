@@ -1,5 +1,6 @@
 package kata.tictactoe.model;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -38,6 +39,15 @@ class GameTest {
         ReflectionTestUtils.setField(game, "state", state);
 
         assertTrue(game.canMakeMove(0, 2));
+    }
+
+    @Test
+    void makeMove_PlayerPlaysTwice_throwsIllegalStateException() {
+        char[][] state = {{'x', 'x', 0}, {0, 0, 0}, {0, 0, 0}};
+        ReflectionTestUtils.setField(game, "state", state);
+        ReflectionTestUtils.setField(game, "lastMove", 'x');
+
+        assertThrowsExactly(IllegalStateException.class, () -> game.makeMove('x', 0, 2));
     }
 
     @Test
@@ -193,4 +203,81 @@ class GameTest {
         assertNotSame(state, state0);
     }
 
+    @Test
+    void getOpponent_NotAPlayer_throwsIllegalArgumentException() {
+        game.setxPlayer("abc");
+        game.setoPlayer("def");
+
+        assertThrowsExactly(IllegalArgumentException.class,
+                () -> game.getOpponent("123"));
+    }
+
+    @Test
+    void getOpponent_PlayerIsO_OpponentIsX() {
+        game.setxPlayer("123");
+        game.setoPlayer("456");
+
+        assertEquals("123", game.getOpponent("456"));
+    }
+
+    @Test
+    void getOpponent_PlayerIsX_OpponentIsO() {
+        game.setxPlayer("123");
+        game.setoPlayer("456");
+
+        assertEquals("456", game.getOpponent("123"));
+    }
+
+    @Test
+    void isYourTurn_PlayerIsXAndLastMoveIsX_ReturnsFalse() {
+        game.setxPlayer("123");
+        ReflectionTestUtils.setField(game, "lastMove", 'x');
+
+        assertFalse(game.isYourTurn("123"));
+    }
+
+    @Test
+    void isYourTurn_PlayerIsXAndLastMoveIsO_ReturnsTrue() {
+        game.setxPlayer("123");
+        ReflectionTestUtils.setField(game, "lastMove", 'o');
+
+        assertTrue(game.isYourTurn("123"));
+    }
+
+    @Test
+    void isYourTurn_PlayerIsOAndLastMoveIsX_ReturnsTrue() {
+        game.setoPlayer("123");
+        ReflectionTestUtils.setField(game, "lastMove", 'x');
+
+        assertTrue(game.isYourTurn("123"));
+    }
+
+    @Test
+    void isYourTurn_PlayerIsOAndLastMoveIsO_ReturnsFalse() {
+        game.setoPlayer("123");
+        ReflectionTestUtils.setField(game, "lastMove", 'o');
+
+        assertFalse(game.isYourTurn("123"));
+    }
+
+    @Test
+    void isYourTurn_PlayerIsOAndFirstMove_ReturnsFalse() {
+        game.setoPlayer("123");
+
+        assertFalse(game.isYourTurn("123"));
+    }
+
+    @Test
+    void isYourTurn_PlayerIsXAndFirstMove_ReturnsTrue() {
+        game.setxPlayer("123");
+
+        assertTrue(game.isYourTurn("123"));
+    }
+
+    @AfterEach
+    void clearState() {
+        ReflectionTestUtils.setField(game, "lastMove", '\u0000');
+        game.setxPlayer(null);
+        game.setoPlayer(null);
+    }
 }

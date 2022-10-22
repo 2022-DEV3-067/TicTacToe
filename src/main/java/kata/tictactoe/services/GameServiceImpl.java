@@ -23,7 +23,6 @@ public class GameServiceImpl implements GameService {
         char sign = random.nextBoolean() ? 'x' : 'o';
         Game currentGame = new Game();
         if (sign == 'o') {
-            currentGame.makeMove('x', random.nextInt(2), random.nextInt(2));
             currentGame.setoPlayer(playerId);
         } else {
             currentGame.setxPlayer(playerId);
@@ -57,21 +56,26 @@ public class GameServiceImpl implements GameService {
                     Integer.valueOf(coordinates.substring(0, 1)),
                     Integer.valueOf(coordinates.substring(1, 2)));
         }
-        makeComputerMove(currentGame, sign);
         return currentGame;
     }
 
-    private void makeComputerMove(final Game currentGame, char sign) {
-        if (currentGame.getResult() == Result.INPROGRESS) {
-            char[][] state = currentGame.getState();
-            for (int l = 0; l < 3; l++) {
-                for (int c = 0; c < 3; c++) {
-                    if (state[l][c] == 0) {
-                        currentGame.makeMove(sign == 'o' ? 'x' : 'o', l, c);
-                        return;
-                    }
-                }
-            }
+    @Override
+    public Game joinGame(String gameId, String playerId) {
+        Game currentGame = getCurrentGameById(gameId);
+        boolean notFound = currentGame == null;
+        boolean reserved = notFound
+                || (currentGame.getoPlayer() != null && currentGame.getxPlayer() != null);
+        boolean alreadyJoined = notFound
+                || playerId.equals(currentGame.getoPlayer())
+                || playerId.equals(currentGame.getxPlayer());
+        if (alreadyJoined || reserved) {
+            throw new IllegalStateException();
         }
+        if (currentGame.getxPlayer() == null) {
+            currentGame.setxPlayer(playerId);
+        } else {
+            currentGame.setoPlayer(playerId);
+        }
+        return currentGame;
     }
 }

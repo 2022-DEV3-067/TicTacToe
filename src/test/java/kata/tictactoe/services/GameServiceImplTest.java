@@ -5,7 +5,8 @@ import kata.tictactoe.model.Result;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -14,7 +15,8 @@ import java.util.Collections;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyChar;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,21 +45,13 @@ class GameServiceImplTest {
 
     @Test
     void startNewGame_SignIso_oPlayerIsSet() {
-        try (MockedConstruction<Game> gameMockedConstruction = Mockito.mockConstruction(Game.class, (game, context) -> {
-            doNothing().when(game).makeMove(anyChar(), anyInt(), anyInt());
-            doCallRealMethod().when(game).setoPlayer(anyString());
-            when(game.getoPlayer()).thenCallRealMethod();
-            when(game.getxPlayer()).thenCallRealMethod();
-        })) {
+        when(random.nextBoolean()).thenReturn(false);
 
-            when(random.nextBoolean()).thenReturn(false);
+        Game game = gameService.startNewGame("123");
 
-            Game game = gameService.startNewGame("123");
+        assertEquals("123", game.getoPlayer());
+        assertNull(game.getxPlayer());
 
-            assertEquals("123", game.getoPlayer());
-            assertNull(game.getxPlayer());
-            verify(game, times(1)).makeMove(eq('x'), anyInt(), anyInt());
-        }
     }
 
     @Test
@@ -69,7 +63,7 @@ class GameServiceImplTest {
 
         Game game = gameService.startNewGame("123");
 
-        assertTrue(game == gameMock);
+        assertSame(game, gameMock);
     }
 
     @Test
@@ -113,6 +107,19 @@ class GameServiceImplTest {
     }
 
     @Test
+    void makeMove_GameInProgress_insertsMoveInGameState() {
+        Game gameMock = mock(Game.class);
+        when(gameMock.getId()).thenReturn("123");
+        when(gameMock.getResult()).thenReturn(Result.INPROGRESS);
+
+        ReflectionTestUtils.setField(gameService, "gameList", Collections.singletonList(gameMock));
+
+        gameService.makeMove("12", "123", "456");
+
+        verify(gameMock, times(1)).makeMove('x', 1, 2);
+    }
+
+    @Test
     void makeMove_GameOver_DoNotMakeFurtherMoves() {
         Game gameMock = mock(Game.class);
         when(gameMock.getId()).thenReturn("123");
@@ -125,36 +132,57 @@ class GameServiceImplTest {
     }
 
     @Test
-    void makeMove_LastMove_DoNotMakeFurtherMoves() {
-        Game gameMock = mock(Game.class);
-        when(gameMock.getId()).thenReturn("123");
-        when(gameMock.getoPlayer()).thenReturn("456");
-        when(gameMock.getResult()).thenReturn(Result.INPROGRESS, Result.DRAW);
-        ReflectionTestUtils.setField(gameService, "gameList", Collections.singletonList(gameMock));
-
-        gameService.makeMove("12", "123", "456");
-
-        verify(gameMock, times(1)).makeMove('o', 1, 2);
-        verifyNoMoreInteractions(gameMock);
+    void joinGame_GameDoesNotExists_ThrowsIllegalStateException() {
+        assertThrowsExactly(IllegalStateException.class,
+                () -> gameService.joinGame("abc", "456"));
     }
 
     @Test
-    void makeMove_GameInProgress_makeOppositeMove() {
+    void joinGame_SameUserJoin_ThrowsIllegalStateException() {
         Game gameMock = mock(Game.class);
-        when(gameMock.getId()).thenReturn("123");
-        when(gameMock.getoPlayer()).thenReturn("456");
-        when(gameMock.getState()).thenReturn(new char[][]{{'x', 'x', 'o'}, {0, 0, 0}, {0, 0, 0}});
-        when(gameMock.getResult()).thenReturn(Result.INPROGRESS);
+        when(gameMock.getId()).thenReturn("abc");
+        when(gameMock.getxPlayer()).thenReturn("456");
         ReflectionTestUtils.setField(gameService, "gameList", Collections.singletonList(gameMock));
 
-        gameService.makeMove("12", "123", "456");
-
-        verify(gameMock, times(1)).makeMove('o', 1, 2);
-        ArgumentCaptor<Integer> moves = ArgumentCaptor.forClass(Integer.class);
-        verify(gameMock, times(1)).makeMove(eq('x'), moves.capture(), moves.capture());
-        int l = moves.getAllValues().get(0);
-        int c = moves.getAllValues().get(1);
-        assertTrue((l == 1 && c >= 0 && c < 3) || (l == 2 && (c == 0 || c == 2)));
+        assertThrowsExactly(IllegalStateException.class,
+                () -> gameService.joinGame("abc", "456"));
     }
+
+    @Test
+    void joinGame_PlayersAlreadySet_ThrowsIllegalStateException() {
+        Game gameMock = mock(Game.class);
+        when(gameMock.getId()).thenReturn("abc");
+        when(gameMock.getxPlayer()).thenReturn("123");
+        when(gameMock.getoPlayer()).thenReturn("789");
+        ReflectionTestUtils.setField(gameService, "gameList", Collections.singletonList(gameMock));
+
+        assertThrowsExactly(IllegalStateException.class,
+                () -> gameService.joinGame("abc", "456"));
+    }
+
+    @Test
+    void joinGame_PlayerIsO_setPlayerOiInGame() {
+        Game gameMock = mock(Game.class, CALLS_REAL_METHODS);
+        when(gameMock.getId()).thenReturn("abc");
+        when(gameMock.getxPlayer()).thenReturn("123");
+        ReflectionTestUtils.setField(gameService, "gameList", Collections.singletonList(gameMock));
+
+        Game game = gameService.joinGame("abc", "456");
+
+        assertEquals("456", game.getoPlayer());
+    }
+
+    @Test
+    void joinGame_PlayerIsX_setPlayerXiInGame() {
+        Game gameMock = mock(Game.class, CALLS_REAL_METHODS);
+        when(gameMock.getId()).thenReturn("abc");
+        when(gameMock.getoPlayer()).thenReturn("123");
+        ReflectionTestUtils.setField(gameService, "gameList", Collections.singletonList(gameMock));
+
+        Game game = gameService.joinGame("abc", "456");
+
+        assertEquals("456", game.getxPlayer());
+    }
+
 
 }
