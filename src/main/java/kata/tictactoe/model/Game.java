@@ -46,6 +46,10 @@ public class Game {
                 || playerId.equals(oPlayer) && lastMove == 'x';
     }
 
+    public boolean opponentHasJoined() {
+        return oPlayer != null && xPlayer != null;
+    }
+
     public String getxPlayer() {
         return xPlayer;
     }

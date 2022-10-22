@@ -40,8 +40,9 @@ public class GameController {
     }
 
     @GetMapping("/game/{id}/join")
-    public String joinGame(@PathVariable String id, HttpSession session) {
+    public String joinGame(@PathVariable String id, HttpSession session) throws IOException {
         Game currentGame = gameService.joinGame(id, session.getId());
+        webSocketHandler.notifyPlayer(currentGame.getOpponent(session.getId()));
         return "redirect:/game/" + currentGame.getId();
     }
 
@@ -75,8 +76,10 @@ public class GameController {
         }
         model.addAttribute("startPos", game.getStartPos());
         model.addAttribute("endPos", game.getEndPos());
-        boolean blockGrid = game.getResult() != Result.INPROGRESS || !game.isYourTurn(session.getId());
+        model.addAttribute("waitForOpponentToJoin", !game.opponentHasJoined());
+        boolean blockGrid = game.getResult() != Result.INPROGRESS || !game.isYourTurn(session.getId()) || !game.opponentHasJoined();
         model.addAttribute("blockGrid", blockGrid);
         model.addAttribute("playerId", session.getId());
+
     }
 }

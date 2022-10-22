@@ -274,6 +274,28 @@ class GameTest {
         assertTrue(game.isYourTurn("123"));
     }
 
+    @Test
+    void opponentHasJoined_xPlayerNull_ReturnsFalse() {
+        game.setoPlayer("123");
+
+        assertFalse(game.opponentHasJoined());
+    }
+
+    @Test
+    void opponentHasJoined_oPlayerNull_ReturnsFalse() {
+        game.setxPlayer("123");
+
+        assertFalse(game.opponentHasJoined());
+    }
+
+    @Test
+    void opponentHasJoined_PlayersNotNull_ReturnsTrue() {
+        game.setxPlayer("123");
+        game.setoPlayer("456");
+
+        assertTrue(game.opponentHasJoined());
+    }
+
     @AfterEach
     void clearState() {
         ReflectionTestUtils.setField(game, "lastMove", '\u0000');

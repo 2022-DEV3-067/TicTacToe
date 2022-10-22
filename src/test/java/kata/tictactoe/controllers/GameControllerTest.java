@@ -46,24 +46,47 @@ class GameControllerTest {
     }
 
     @Test
-    void goToNewGame_EvenGame_GridEmpty() throws Exception {
+    void goToNewGame_OppoenentHasNotJoined_GridEmpty() throws Exception {
         MockHttpSession session = new MockHttpSession(null, "456");
-        when(gameService.getCurrentGameById(anyString())).thenReturn(mock(Game.class));
+        Game game = mock(Game.class);
+        when(game.opponentHasJoined()).thenReturn(false);
+        when(gameService.getCurrentGameById(anyString())).thenReturn(game);
 
         mockMvc.perform(get("/game/123").session(session).param("id", "123"))
                 .andExpect(view().name("game"))
-                .andExpect(model().attributeExists("game", "playerSign", "opponentSign"));
+                .andExpect(model().attributeExists("game", "playerSign", "opponentSign"))
+                .andExpect(model().attribute("waitForOpponentToJoin", true))
+                .andExpect(model().attribute("blockGrid", true));
+    }
+
+    @Test
+    void goToNewGame_OppoenentHasJoined_GridEmpty() throws Exception {
+        MockHttpSession session = new MockHttpSession(null, "456");
+        Game game = mock(Game.class);
+        when(game.opponentHasJoined()).thenReturn(true);
+        when(game.getResult()).thenReturn(Result.INPROGRESS);
+        when(game.isYourTurn("456")).thenReturn(true);
+        when(gameService.getCurrentGameById(anyString())).thenReturn(game);
+
+        mockMvc.perform(get("/game/123").session(session).param("id", "123"))
+                .andExpect(view().name("game"))
+                .andExpect(model().attributeExists("game", "playerSign", "opponentSign"))
+                .andExpect(model().attribute("waitForOpponentToJoin", false))
+                .andExpect(model().attribute("blockGrid", false));
     }
 
     @Test
     void joinGame_redirectToGamePage() throws Exception {
         MockHttpSession session = new MockHttpSession(null, "456");
-        when(gameService.joinGame(anyString(), anyString())).thenReturn(mock(Game.class));
+        Game game = mock(Game.class);
+        when(game.getOpponent("456")).thenReturn("123");
+        when(gameService.joinGame(anyString(), anyString())).thenReturn(game);
 
-        mockMvc.perform(get("/game/123/join").session(session).param("id", "123"))
+        mockMvc.perform(get("/game/abc/join").session(session).param("id", "abc"))
                 .andExpect(view().name(StringStartsWith.startsWith("redirect:/game")));
 
-        verify(gameService, times(1)).joinGame("123", "456");
+        verify(gameService, times(1)).joinGame("abc", "456");
+        verify(webSocketHandler, times(1)).notifyPlayer("123");
     }
 
     @Test
@@ -123,6 +146,7 @@ class GameControllerTest {
         when(gameService.getCurrentGameById(anyString())).thenReturn(mock);
         when(mock.getResult()).thenReturn(Result.INPROGRESS);
         when(mock.isYourTurn("456")).thenReturn(true);
+        when(mock.opponentHasJoined()).thenReturn(true);
 
         mockMvc.perform(post("/game/123/refresh")
                 .session(session)

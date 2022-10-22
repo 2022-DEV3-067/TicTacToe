@@ -31,12 +31,16 @@
             <span th:class="${playerSign}" th:text="${playerSign}"></span>
             <span> )</span></span>
         <span class="separator">-</span>
-        <span class="p2">
+        <span th:if="${waitForOpponentToJoin}" class="p2">
+             <span>Waiting for another player to join ...</span>
+        </span>
+        <span th:unless="${waitForOpponentToJoin}" class="p2">
             <span>Player ( </span>
             <span th:class="${opponentSign}" th:text="${opponentSign}"></span>
             <span> )</span></span>
     </div>
     <div class="score">
+
         <span th:if="${winner}">You Win :)</span>
         <span th:if="${winner != null && !winner}">You lost :(</span>
         <span th:if="${draw}">Draw :|</span>
@@ -49,7 +53,7 @@
 <script th:inline="javascript">
 /*<![CDATA[*/
     var makeMove = function(event) {
-        if($('#game-grid').hasClass('block-grid')) {
+        if($('.block-grid').length) {
             return;
         }
         var gameId = /*[[${game.id}]]*/;
